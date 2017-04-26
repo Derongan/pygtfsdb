@@ -1,5 +1,8 @@
+from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy.orm import relationship
+
 from Base import Base
-from sqlalchemy import Column, String, Integer
+from GTFSFeed import GTFSFeed
 
 
 class Agency(Base):
@@ -16,3 +19,9 @@ class Agency(Base):
     agency_email = Column(String, default=None)
 
     pid = Column(Integer, primary_key=True)
+
+    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id))
+
+    gtfsfeed = relationship('GTFSFeed', back_populates='agencies')
+
+

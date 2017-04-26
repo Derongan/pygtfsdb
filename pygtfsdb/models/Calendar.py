@@ -1,5 +1,10 @@
+from sqlalchemy.orm import relationship
+
 from Base import Base
-from sqlalchemy import Column, String, Boolean, Date, Integer
+from Agency import Agency
+from sqlalchemy import Column, String, Boolean, Date, Integer, ForeignKey
+
+from GTFSFeed import GTFSFeed
 
 
 class Calendar(Base):
@@ -19,3 +24,12 @@ class Calendar(Base):
     end_date = Column(Date, nullable=False)
 
     pid = Column(Integer, autoincrement=True, primary_key=True)
+
+    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id))
+
+    gtfsfeed = relationship('GTFSFeed', back_populates='calendars')
+
+
+    def __init__(self, **kwargs):
+        """Ignore extra columns"""
+        self.__dict__.update(kwargs)
