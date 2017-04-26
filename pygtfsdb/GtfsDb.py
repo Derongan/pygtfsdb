@@ -9,6 +9,10 @@ from sqlalchemy.orm import sessionmaker
 
 from models import *
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 
 class GtfsDb(object):
     def __init__(self, dbstring):
@@ -21,7 +25,7 @@ class GtfsDb(object):
     def load(self, url, gtfs_name):
         """
         Download the zipfile and extract it into objects
-        :param url: The string specifying gtfs archive url
+        :param url: The string specifying gtfs archive url. If it is a file object we use that instead
         :param gtfs_name: The name of the current gtfs org
         :return:
         """
@@ -30,13 +34,17 @@ class GtfsDb(object):
 
         session = sessionmaker(bind=engine)()
 
-        response = requests.get(url, stream=True)
+        if type(url) == ZipFile:
+            zipped_gtfs = url
+        else:
+            response = requests.get(url, stream=True)
 
-        zipped_gtfs = ZipFile(StringIO(response.content))
+            zipped_gtfs = ZipFile(StringIO(response.content))
 
         feed_row = GTFSFeed(gtfs_name=gtfs_name)
         session.add(feed_row)
 
+        logging.info("Loading agencies")
         with zipped_gtfs.open('agency.txt') as agency_fp:
             reader = csv.DictReader(agency_fp, delimiter=",")
             for row in reader:
@@ -46,6 +54,7 @@ class GtfsDb(object):
 
             session.commit()
 
+        logging.info("Loading calendars")
         with zipped_gtfs.open('calendar.txt') as calendar_fp:
             reader = csv.DictReader(calendar_fp, delimiter=",")
 
@@ -62,13 +71,13 @@ class GtfsDb(object):
                 row['saturday'] = row['saturday'] == "1"
                 row['sunday'] = row['sunday'] == "1"
 
-
                 c = Calendar(**row)
                 feed_row.calendars.append(c)
                 session.add(c)
 
             session.commit()
 
+        logging.info("Loading routes")
         with zipped_gtfs.open('routes.txt') as route_fp:
             reader = csv.DictReader(route_fp, delimiter=",")
 
@@ -79,11 +88,38 @@ class GtfsDb(object):
 
             session.commit()
 
+        logging.info("Loading stops")
+        with zipped_gtfs.open('stops.txt') as stop_fp:
+            reader = csv.DictReader(stop_fp, delimiter=",")
+
+            for row in reader:
+                s = Stop(**row)
+                feed_row.stops.append(s)
+                session.add(s)
+
+            session.commit()
+
+        logging.info("Loading trips")
+        with zipped_gtfs.open('trips.txt') as trip_fp:
+            reader = csv.DictReader(trip_fp, delimiter=",")
+
+            for row in reader:
+                t = Trip(**row)
+                t.calendar = session.query(Calendar).filter(Calendar.service_id == t.service_id).filter(
+                    Calendar.gtfsfeed == feed_row).first()
+                t.route = session.query(Route).filter(Route.route_id == t.route_id).filter(
+                    Route.gtfsfeed == feed_row).first()
+
+                feed_row.trips.append(t)
+                session.add(t)
+
+            session.commit()
+
         session.close()
 
 
 if __name__ == "__main__":
     gt = GtfsDb('sqlite:///test.db')
 
-    gt.load(
-        "http://transitfeeds.com/link?u=http://iportal.sacrt.com/GTFS/Unitrans/google_transit.zip", "Unitrans")
+    zf = ZipFile("/home/derongan/Projects/Alexa/pygtfsdb/pygtfsdb/test_data/unitransgtfs.zip")
+    gt.load(zf, "Unitrans")

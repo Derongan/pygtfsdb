@@ -12,7 +12,7 @@ class GTFSFeed(Base):
     gtfs_name = Column(String, unique=True)
 
     agencies = relationship('Agency', back_populates='gtfsfeed')
-
     calendars = relationship('Calendar', back_populates='gtfsfeed')
-
     routes = relationship('Route', back_populates='gtfsfeed')
+    stops = relationship('Stop', back_populates='gtfsfeed')
+    trips = relationship('Trip', back_populates='gtfsfeed')
