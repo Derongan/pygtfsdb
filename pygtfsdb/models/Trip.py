@@ -11,11 +11,14 @@ class Trip(Base):
     __tablename__ = 'trip'
 
     # TODO Flesh out. At the moment this just has the most basic capabilities
+    # TODO Maybe somehow make foreign keys required
 
-    service_id = Column(Integer, ForeignKey(Calendar.pid), nullable=False)  # Connects to calendar table actually
+    service_pid = Column(Integer, ForeignKey(Calendar.pid))  # Connects to calendar table actually
+    service_id = Column(String, nullable=False)  # Connects to calendar table actually
     calendar = relationship("Calendar")
 
-    route_id = Column(Integer, ForeignKey(Route.pid), nullable=False)
+    route_pid = Column(Integer, ForeignKey(Route.pid))
+    route_id = Column(String, nullable=False)
     route = relationship("Route")
 
     trip_id = Column(String, nullable=False)

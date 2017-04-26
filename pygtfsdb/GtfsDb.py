@@ -6,6 +6,7 @@ from zipfile import ZipFile
 import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql.expression import select
 
 from models import *
 
@@ -105,13 +106,57 @@ class GtfsDb(object):
 
             for row in reader:
                 t = Trip(**row)
-                t.calendar = session.query(Calendar).filter(Calendar.service_id == t.service_id).filter(
-                    Calendar.gtfsfeed == feed_row).first()
-                t.route = session.query(Route).filter(Route.route_id == t.route_id).filter(
-                    Route.gtfsfeed == feed_row).first()
+                # t.calendar = session.query(Calendar).filter(Calendar.service_id == t.service_id).filter(
+                #     Calendar.gtfsfeed == feed_row).first()
+                # t.route = session.query(Route).filter(Route.route_id == t.route_id).filter(
+                #     Route.gtfsfeed == feed_row).first()
 
                 feed_row.trips.append(t)
                 session.add(t)
+
+            session.commit()
+
+            route_sel = select([Route.pid]).where(Trip.route_id == Route.route_id).where(
+                Trip.gtfsfeed == feed_row).where(Route.gtfsfeed == feed_row)
+            calendar_sel = select([Calendar.pid]).where(Trip.service_id == Calendar.service_id).where(
+                Trip.gtfsfeed == feed_row).where(Calendar.gtfsfeed == feed_row)
+
+            session.execute(Trip.__table__.update().values(route_pid=route_sel, service_pid=calendar_sel))
+
+            session.commit()
+
+        logging.info("Loading stop times")
+        with zipped_gtfs.open('stop_times.txt') as time_fp:
+            reader = csv.DictReader(time_fp, delimiter=",")
+
+            for row in reader:
+                # TODO handle times above 24hr (ie next day on route)
+                try:
+                    row['arrival_time'] = datetime.strptime(row['arrival_time'], '%H:%M:%S').time()
+                except ValueError:
+                    row['arrival_time'] = None
+                try:
+                    row['departure_time'] = datetime.strptime(row['departure_time'], '%H:%M:%S').time()
+                except ValueError:
+                    row['departure_time'] = None
+
+                t = StopTime(**row)
+                # t.trip = session.query(Trip).filter(Trip.trip_id == t.trip_id).filter(
+                #     Trip.gtfsfeed == feed_row).first()
+                # t.stop = session.query(Stop).filter(Stop.stop_id == t.stop_id).filter(
+                #     Stop.gtfsfeed == feed_row).first()
+
+                feed_row.stop_times.append(t)
+                session.add(t)
+
+            session.commit()
+
+            trip_sel = select([Trip.pid]).where(StopTime.trip_id == Trip.trip_id).where(
+                Trip.gtfsfeed == feed_row).where(StopTime.gtfsfeed == feed_row)
+            stop_sel = select([Stop.pid]).where(StopTime.stop_id == Stop.stop_id).where(
+                StopTime.gtfsfeed == feed_row).where(Stop.gtfsfeed == feed_row)
+
+            session.execute(StopTime.__table__.update().values(trip_pid=trip_sel, stop_pid=stop_sel))
 
             session.commit()
 

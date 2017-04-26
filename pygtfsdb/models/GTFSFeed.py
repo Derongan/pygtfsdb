@@ -16,3 +16,4 @@ class GTFSFeed(Base):
     routes = relationship('Route', back_populates='gtfsfeed')
     stops = relationship('Stop', back_populates='gtfsfeed')
     trips = relationship('Trip', back_populates='gtfsfeed')
+    stop_times = relationship('StopTime', back_populates='gtfsfeed')
