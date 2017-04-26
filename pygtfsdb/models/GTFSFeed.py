@@ -14,3 +14,5 @@ class GTFSFeed(Base):
     agencies = relationship('Agency', back_populates='gtfsfeed')
 
     calendars = relationship('Calendar', back_populates='gtfsfeed')
+
+    routes = relationship('Route', back_populates='gtfsfeed')

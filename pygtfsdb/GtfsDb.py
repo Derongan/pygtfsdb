@@ -53,9 +53,29 @@ class GtfsDb(object):
                 row['start_date'] = datetime.strptime(row['start_date'], '%Y%m%d')
                 row['end_date'] = datetime.strptime(row['end_date'], '%Y%m%d')
 
+                # Handle sqlalchemy improper conversion to boolean for sqlite (Could be a local issue)
+                row['monday'] = row['monday'] == "1"
+                row['tuesday'] = row['tuesday'] == "1"
+                row['wednesday'] = row['wednesday'] == "1"
+                row['thursday'] = row['thursday'] == "1"
+                row['friday'] = row['friday'] == "1"
+                row['saturday'] = row['saturday'] == "1"
+                row['sunday'] = row['sunday'] == "1"
+
+
                 c = Calendar(**row)
                 feed_row.calendars.append(c)
                 session.add(c)
+
+            session.commit()
+
+        with zipped_gtfs.open('routes.txt') as route_fp:
+            reader = csv.DictReader(route_fp, delimiter=",")
+
+            for row in reader:
+                r = Route(**row)
+                feed_row.routes.append(r)
+                session.add(r)
 
             session.commit()
 
@@ -66,5 +86,4 @@ if __name__ == "__main__":
     gt = GtfsDb('sqlite:///test.db')
 
     gt.load(
-        "https://api.transitfeeds.com/v1/getLatestFeedVersion?feed=vermont-translines%2F566&key=5fbcd353-bfde-4f01-b4b6-f4668a87729d",
-        "feedname")
+        "http://transitfeeds.com/link?u=http://iportal.sacrt.com/GTFS/Unitrans/google_transit.zip", "Unitrans")

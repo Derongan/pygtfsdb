@@ -24,4 +24,6 @@ class Agency(Base):
 
     gtfsfeed = relationship('GTFSFeed', back_populates='agencies')
 
-
+    def __init__(self, **kwargs):
+        """Ignore extra columns"""
+        self.__dict__.update(kwargs)
