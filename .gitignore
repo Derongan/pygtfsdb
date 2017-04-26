@@ -2,3 +2,4 @@
 .idea
 *.db
 *.pyc
+/pygtfsdb/test_data/
