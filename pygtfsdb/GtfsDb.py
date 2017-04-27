@@ -166,5 +166,5 @@ class GtfsDb(object):
 if __name__ == "__main__":
     gt = GtfsDb('sqlite:///test.db')
 
-    zf = ZipFile("/home/derongan/Projects/Alexa/pygtfsdb/pygtfsdb/test_data/unitransgtfs.zip")
-    gt.load(zf, "Unitrans")
+    # zf = ZipFile(localfile)
+    gt.load("http://transitfeeds.com/p/bart/58/latest/download", "Bart")
