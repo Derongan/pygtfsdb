@@ -1,4 +1,4 @@
-#pygtfsdb
+# pygtfsdb
 This is a quick project that loads GTFS Static (General Transit Feed Specification) data into a relational database. It is currently only tested with sqlite but is intended to later work more speicifically with postgresql + postgis.
 
 TODO: Add parameter for enabling spatial data.
