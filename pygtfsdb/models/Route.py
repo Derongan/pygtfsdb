@@ -1,3 +1,4 @@
+from sqlalchemy import CheckConstraint
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -8,11 +9,15 @@ from GTFSFeed import GTFSFeed
 class Route(Base):
     __tablename__ = 'route'
 
+    __table_args__ = (
+        CheckConstraint('NOT(route_short_name IS NULL AND route_long_name IS NULL)'),
+    )
+
     route_id = Column(String, nullable=False)
     agency_id = Column(String, default=None)
 
-    route_short_name = Column(String, nullable=False)
-    route_long_name = Column(String, nullable=False)
+    route_short_name = Column(String)
+    route_long_name = Column(String)
 
     route_desc = Column(String, default=None)
 
