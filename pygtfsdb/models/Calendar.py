@@ -20,8 +20,10 @@ class Calendar(Base):
     saturday = Column(Boolean, nullable=False, default=False)
     sunday = Column(Boolean, nullable=False, default=False)
 
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
+
+    # TODO Figure out how to handle these. They should be set but sometimes are not
+    start_date = Column(Date)
+    end_date = Column(Date)
 
     pid = Column(Integer, autoincrement=True, primary_key=True)
 

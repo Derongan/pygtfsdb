@@ -79,8 +79,14 @@ class GtfsDb(object):
             for row in reader:
                 row = GtfsDb.empty_string_to_none(row)
 
-                row['start_date'] = datetime.strptime(row['start_date'], '%Y%m%d')
-                row['end_date'] = datetime.strptime(row['end_date'], '%Y%m%d')
+                try:
+                    row['start_date'] = datetime.strptime(row['start_date'], '%Y%m%d')
+                except ValueError:
+                    row['start_date'] = None
+                try:
+                    row['end_date'] = datetime.strptime(row['end_date'], '%Y%m%d')
+                except ValueError:
+                    row['end_date'] = None
 
                 # Handle sqlalchemy improper conversion to boolean for sqlite (Could be a local issue)
                 row['monday'] = row['monday'] == "1"
