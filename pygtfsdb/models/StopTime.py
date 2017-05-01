@@ -14,11 +14,11 @@ class StopTime(Base):
     # TODO Maybe somehow make foreign keys required
 
     trip_pid = Column(Integer, ForeignKey(Trip.pid))
-    trip_id = Column(Integer, nullable=False)
+    trip_id = Column(String, nullable=False)
     trip = relationship("Trip")
 
     stop_pid = Column(Integer, ForeignKey(Stop.pid))
-    stop_id = Column(Integer, nullable=False)
+    stop_id = Column(String, nullable=False)
     stop = relationship("Stop")
 
     # TODO These times should be not null and should be interpolated if the value is missing.

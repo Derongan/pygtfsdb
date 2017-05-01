@@ -16,12 +16,30 @@ logging.basicConfig(level=logging.INFO)
 
 
 class GtfsDb(object):
-    def __init__(self, dbstring):
+    @classmethod
+    def empty_string_to_none(cls, dict):
+        for k, v in dict.items():
+            if v is "":
+                dict[k] = None
+
+        return dict
+
+    def __init__(self, dbstring, spatial=False):
         """
 
         :param dbstring: The string sqlalchemy will use to connect
+        :param spatial: Does the database support spatial datatypes?
         """
         self.dbstring = dbstring
+
+        self.spatial = spatial
+
+        self.engine = create_engine(self.dbstring)
+
+        if self.spatial:
+            Stop.add_geom()
+
+        Base.metadata.create_all(self.engine, checkfirst=True)
 
     def load(self, url, gtfs_name):
         """
@@ -30,10 +48,8 @@ class GtfsDb(object):
         :param gtfs_name: The name of the current gtfs org
         :return:
         """
-        engine = create_engine(self.dbstring)
-        Base.metadata.create_all(engine, checkfirst=True)
 
-        session = sessionmaker(bind=engine)()
+        session = sessionmaker(bind=self.engine)()
 
         if type(url) == ZipFile:
             zipped_gtfs = url
@@ -49,6 +65,7 @@ class GtfsDb(object):
         with zipped_gtfs.open('agency.txt') as agency_fp:
             reader = csv.DictReader(agency_fp, delimiter=",")
             for row in reader:
+                row = GtfsDb.empty_string_to_none(row)
                 a = Agency(**row)
                 feed_row.agencies.append(a)
                 session.add(a)
@@ -60,6 +77,8 @@ class GtfsDb(object):
             reader = csv.DictReader(calendar_fp, delimiter=",")
 
             for row in reader:
+                row = GtfsDb.empty_string_to_none(row)
+
                 row['start_date'] = datetime.strptime(row['start_date'], '%Y%m%d')
                 row['end_date'] = datetime.strptime(row['end_date'], '%Y%m%d')
 
@@ -83,6 +102,8 @@ class GtfsDb(object):
             reader = csv.DictReader(route_fp, delimiter=",")
 
             for row in reader:
+                row = GtfsDb.empty_string_to_none(row)
+
                 r = Route(**row)
                 feed_row.routes.append(r)
                 session.add(r)
@@ -94,6 +115,8 @@ class GtfsDb(object):
             reader = csv.DictReader(stop_fp, delimiter=",")
 
             for row in reader:
+                row = GtfsDb.empty_string_to_none(row)
+
                 s = Stop(**row)
                 feed_row.stops.append(s)
                 session.add(s)
@@ -105,6 +128,8 @@ class GtfsDb(object):
             reader = csv.DictReader(trip_fp, delimiter=",")
 
             for row in reader:
+                row = GtfsDb.empty_string_to_none(row)
+
                 t = Trip(**row)
                 # t.calendar = session.query(Calendar).filter(Calendar.service_id == t.service_id).filter(
                 #     Calendar.gtfsfeed == feed_row).first()
@@ -130,6 +155,8 @@ class GtfsDb(object):
             reader = csv.DictReader(time_fp, delimiter=",")
 
             for row in reader:
+                row = GtfsDb.empty_string_to_none(row)
+
                 # TODO handle times above 24hr (ie next day on route)
                 try:
                     row['arrival_time'] = datetime.strptime(row['arrival_time'], '%H:%M:%S').time()
@@ -164,7 +191,7 @@ class GtfsDb(object):
 
 
 if __name__ == "__main__":
-    gt = GtfsDb('sqlite:///test.db')
+    gt = GtfsDb('postgresql://postgres:@localhost:5432/alexabus', spatial=True)
 
     # zf = ZipFile(localfile)
     gt.load("http://transitfeeds.com/p/bart/58/latest/download", "Bart")

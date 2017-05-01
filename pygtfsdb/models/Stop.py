@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, Float
 from sqlalchemy.orm import relationship
+from geoalchemy2 import Geometry
 
 from Base import Base
 from GTFSFeed import GTFSFeed
@@ -36,3 +37,7 @@ class Stop(Base):
     def __init__(self, **kwargs):
         """Ignore extra columns"""
         self.__dict__.update(kwargs)
+
+    @classmethod
+    def add_geom(cls):
+        cls.geom = Column(Geometry('POINT'))
