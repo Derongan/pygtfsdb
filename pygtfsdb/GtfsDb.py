@@ -58,142 +58,146 @@ class GtfsDb(object):
 
             zipped_gtfs = ZipFile(StringIO(response.content))
 
-        feed_row = GTFSFeed(gtfs_name=gtfs_name)
-        session.add(feed_row)
+        try:
+            feed_row = GTFSFeed(gtfs_name=gtfs_name)
+            session.add(feed_row)
 
-        logging.info("Loading agencies")
-        with zipped_gtfs.open('agency.txt') as agency_fp:
-            reader = csv.DictReader(agency_fp, delimiter=",")
-            for row in reader:
-                row = GtfsDb.empty_string_to_none(row)
-                a = Agency(**row)
-                feed_row.agencies.append(a)
-                session.add(a)
+            logging.info("Loading agencies")
+            with zipped_gtfs.open('agency.txt') as agency_fp:
+                reader = csv.DictReader(agency_fp, delimiter=",")
+                for row in reader:
+                    row = GtfsDb.empty_string_to_none(row)
+                    a = Agency(**row)
+                    feed_row.agencies.append(a)
+                    session.add(a)
 
-            session.commit()
+                session.commit()
 
-        logging.info("Loading calendars")
-        with zipped_gtfs.open('calendar.txt') as calendar_fp:
-            reader = csv.DictReader(calendar_fp, delimiter=",")
+            logging.info("Loading calendars")
+            with zipped_gtfs.open('calendar.txt') as calendar_fp:
+                reader = csv.DictReader(calendar_fp, delimiter=",")
 
-            for row in reader:
-                row = GtfsDb.empty_string_to_none(row)
+                for row in reader:
+                    row = GtfsDb.empty_string_to_none(row)
 
-                try:
-                    row['start_date'] = datetime.strptime(row['start_date'], '%Y%m%d')
-                except (ValueError, TypeError):
-                    row['start_date'] = None
-                try:
-                    row['end_date'] = datetime.strptime(row['end_date'], '%Y%m%d')
-                except (ValueError, TypeError):
-                    row['end_date'] = None
+                    try:
+                        row['start_date'] = datetime.strptime(row['start_date'], '%Y%m%d')
+                    except (ValueError, TypeError):
+                        row['start_date'] = None
+                    try:
+                        row['end_date'] = datetime.strptime(row['end_date'], '%Y%m%d')
+                    except (ValueError, TypeError):
+                        row['end_date'] = None
 
-                # Handle sqlalchemy improper conversion to boolean for sqlite (Could be a local issue)
-                row['monday'] = row['monday'] == "1"
-                row['tuesday'] = row['tuesday'] == "1"
-                row['wednesday'] = row['wednesday'] == "1"
-                row['thursday'] = row['thursday'] == "1"
-                row['friday'] = row['friday'] == "1"
-                row['saturday'] = row['saturday'] == "1"
-                row['sunday'] = row['sunday'] == "1"
+                    # Handle sqlalchemy improper conversion to boolean for sqlite (Could be a local issue)
+                    row['monday'] = row['monday'] == "1"
+                    row['tuesday'] = row['tuesday'] == "1"
+                    row['wednesday'] = row['wednesday'] == "1"
+                    row['thursday'] = row['thursday'] == "1"
+                    row['friday'] = row['friday'] == "1"
+                    row['saturday'] = row['saturday'] == "1"
+                    row['sunday'] = row['sunday'] == "1"
 
-                c = Calendar(**row)
-                feed_row.calendars.append(c)
-                session.add(c)
+                    c = Calendar(**row)
+                    feed_row.calendars.append(c)
+                    session.add(c)
 
-            session.commit()
+                session.commit()
 
-        logging.info("Loading routes")
-        with zipped_gtfs.open('routes.txt') as route_fp:
-            reader = csv.DictReader(route_fp, delimiter=",")
+            logging.info("Loading routes")
+            with zipped_gtfs.open('routes.txt') as route_fp:
+                reader = csv.DictReader(route_fp, delimiter=",")
 
-            for row in reader:
-                row = GtfsDb.empty_string_to_none(row)
+                for row in reader:
+                    row = GtfsDb.empty_string_to_none(row)
 
-                r = Route(**row)
-                feed_row.routes.append(r)
-                session.add(r)
+                    r = Route(**row)
+                    feed_row.routes.append(r)
+                    session.add(r)
 
-            session.commit()
+                session.commit()
 
-        logging.info("Loading stops")
-        with zipped_gtfs.open('stops.txt') as stop_fp:
-            reader = csv.DictReader(stop_fp, delimiter=",")
+            logging.info("Loading stops")
+            with zipped_gtfs.open('stops.txt') as stop_fp:
+                reader = csv.DictReader(stop_fp, delimiter=",")
 
-            for row in reader:
-                row = GtfsDb.empty_string_to_none(row)
+                for row in reader:
+                    row = GtfsDb.empty_string_to_none(row)
 
-                s = Stop(**row)
-                feed_row.stops.append(s)
-                session.add(s)
+                    s = Stop(**row)
+                    feed_row.stops.append(s)
+                    session.add(s)
 
-            session.commit()
+                session.commit()
 
-        logging.info("Loading trips")
-        with zipped_gtfs.open('trips.txt') as trip_fp:
-            reader = csv.DictReader(trip_fp, delimiter=",")
+            logging.info("Loading trips")
+            with zipped_gtfs.open('trips.txt') as trip_fp:
+                reader = csv.DictReader(trip_fp, delimiter=",")
 
-            for row in reader:
-                row = GtfsDb.empty_string_to_none(row)
+                for row in reader:
+                    row = GtfsDb.empty_string_to_none(row)
 
-                t = Trip(**row)
-                # t.calendar = session.query(Calendar).filter(Calendar.service_id == t.service_id).filter(
-                #     Calendar.gtfsfeed == feed_row).first()
-                # t.route = session.query(Route).filter(Route.route_id == t.route_id).filter(
-                #     Route.gtfsfeed == feed_row).first()
+                    t = Trip(**row)
+                    # t.calendar = session.query(Calendar).filter(Calendar.service_id == t.service_id).filter(
+                    #     Calendar.gtfsfeed == feed_row).first()
+                    # t.route = session.query(Route).filter(Route.route_id == t.route_id).filter(
+                    #     Route.gtfsfeed == feed_row).first()
 
-                feed_row.trips.append(t)
-                session.add(t)
+                    feed_row.trips.append(t)
+                    session.add(t)
 
-            session.commit()
+                session.commit()
 
-            route_sel = select([Route.pid]).where(Trip.route_id == Route.route_id).where(
-                Trip.gtfsfeed == feed_row).where(Route.gtfsfeed == feed_row)
-            calendar_sel = select([Calendar.pid]).where(Trip.service_id == Calendar.service_id).where(
-                Trip.gtfsfeed == feed_row).where(Calendar.gtfsfeed == feed_row)
+                route_sel = select([Route.pid]).where(Trip.route_id == Route.route_id).where(
+                    Trip.gtfsfeed == feed_row).where(Route.gtfsfeed == feed_row)
+                calendar_sel = select([Calendar.pid]).where(Trip.service_id == Calendar.service_id).where(
+                    Trip.gtfsfeed == feed_row).where(Calendar.gtfsfeed == feed_row)
 
-            session.execute(Trip.__table__.update().values(route_pid=route_sel, service_pid=calendar_sel))
+                session.execute(Trip.__table__.update().values(route_pid=route_sel, service_pid=calendar_sel))
 
-            session.commit()
+                session.commit()
 
-        logging.info("Loading stop times")
-        with zipped_gtfs.open('stop_times.txt') as time_fp:
-            reader = csv.DictReader(time_fp, delimiter=",")
+            logging.info("Loading stop times")
+            with zipped_gtfs.open('stop_times.txt') as time_fp:
+                reader = csv.DictReader(time_fp, delimiter=",")
 
-            for row in reader:
-                row = GtfsDb.empty_string_to_none(row)
+                for row in reader:
+                    row = GtfsDb.empty_string_to_none(row)
 
-                # TODO handle times above 24hr (ie next day on route)
-                try:
-                    row['arrival_time'] = datetime.strptime(row['arrival_time'], '%H:%M:%S').time()
-                except (ValueError, TypeError):
-                    row['arrival_time'] = None
-                try:
-                    row['departure_time'] = datetime.strptime(row['departure_time'], '%H:%M:%S').time()
-                except (ValueError, TypeError):
-                    row['departure_time'] = None
+                    # TODO handle times above 24hr (ie next day on route)
+                    try:
+                        row['arrival_time'] = datetime.strptime(row['arrival_time'], '%H:%M:%S').time()
+                    except (ValueError, TypeError):
+                        row['arrival_time'] = None
+                    try:
+                        row['departure_time'] = datetime.strptime(row['departure_time'], '%H:%M:%S').time()
+                    except (ValueError, TypeError):
+                        row['departure_time'] = None
 
-                t = StopTime(**row)
-                # t.trip = session.query(Trip).filter(Trip.trip_id == t.trip_id).filter(
-                #     Trip.gtfsfeed == feed_row).first()
-                # t.stop = session.query(Stop).filter(Stop.stop_id == t.stop_id).filter(
-                #     Stop.gtfsfeed == feed_row).first()
+                    t = StopTime(**row)
+                    # t.trip = session.query(Trip).filter(Trip.trip_id == t.trip_id).filter(
+                    #     Trip.gtfsfeed == feed_row).first()
+                    # t.stop = session.query(Stop).filter(Stop.stop_id == t.stop_id).filter(
+                    #     Stop.gtfsfeed == feed_row).first()
 
-                feed_row.stop_times.append(t)
-                session.add(t)
+                    feed_row.stop_times.append(t)
+                    session.add(t)
 
-            session.commit()
+                session.commit()
 
-            trip_sel = select([Trip.pid]).where(StopTime.trip_id == Trip.trip_id).where(
-                Trip.gtfsfeed == feed_row).where(StopTime.gtfsfeed == feed_row)
-            stop_sel = select([Stop.pid]).where(StopTime.stop_id == Stop.stop_id).where(
-                StopTime.gtfsfeed == feed_row).where(Stop.gtfsfeed == feed_row)
+                trip_sel = select([Trip.pid]).where(StopTime.trip_id == Trip.trip_id).where(
+                    Trip.gtfsfeed == feed_row).where(StopTime.gtfsfeed == feed_row)
+                stop_sel = select([Stop.pid]).where(StopTime.stop_id == Stop.stop_id).where(
+                    StopTime.gtfsfeed == feed_row).where(Stop.gtfsfeed == feed_row)
 
-            session.execute(StopTime.__table__.update().values(trip_pid=trip_sel, stop_pid=stop_sel))
+                session.execute(StopTime.__table__.update().values(trip_pid=trip_sel, stop_pid=stop_sel))
 
-            session.commit()
-
-        session.close()
+                session.commit()
+        except:
+            raise
+        finally:
+            zipped_gtfs.close()
+            session.close()
 
 
 if __name__ == "__main__":
