@@ -81,11 +81,11 @@ class GtfsDb(object):
 
                 try:
                     row['start_date'] = datetime.strptime(row['start_date'], '%Y%m%d')
-                except ValueError:
+                except (ValueError, TypeError):
                     row['start_date'] = None
                 try:
                     row['end_date'] = datetime.strptime(row['end_date'], '%Y%m%d')
-                except ValueError:
+                except (ValueError, TypeError):
                     row['end_date'] = None
 
                 # Handle sqlalchemy improper conversion to boolean for sqlite (Could be a local issue)
@@ -166,11 +166,11 @@ class GtfsDb(object):
                 # TODO handle times above 24hr (ie next day on route)
                 try:
                     row['arrival_time'] = datetime.strptime(row['arrival_time'], '%H:%M:%S').time()
-                except ValueError:
+                except (ValueError, TypeError):
                     row['arrival_time'] = None
                 try:
                     row['departure_time'] = datetime.strptime(row['departure_time'], '%H:%M:%S').time()
-                except ValueError:
+                except (ValueError, TypeError):
                     row['departure_time'] = None
 
                 t = StopTime(**row)
