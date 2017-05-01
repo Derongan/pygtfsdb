@@ -10,7 +10,7 @@ class Agency(Base):
 
     agency_id = Column(String, default=None)
     agency_name = Column(String, nullable=False)
-    agency_url = Column(String, nullable=False, unique=True)
+    agency_url = Column(String, nullable=False)
     agency_timezone = Column(String, nullable=False)
 
     agency_lang = Column(String, default=None)
