@@ -154,24 +154,23 @@ class GtfsDb(object):
             with zipped_gtfs.open('trips.txt') as trip_fp:
                 reader = csv.DictReader(trip_fp, delimiter=",")
                 i = 0
+                objects = []
                 for row in reader:
                     row = GtfsDb.empty_string_to_none(row)
 
                     t = Trip(**row)
-                    # t.calendar = session.query(Calendar).filter(Calendar.service_id == t.service_id).filter(
-                    #     Calendar.gtfsfeed == feed_row).first()
-                    # t.route = session.query(Route).filter(Route.route_id == t.route_id).filter(
-                    #     Route.gtfsfeed == feed_row).first()
-
-                    feed_row.trips.append(t)
-                    session.add(t)
+                    t.gtfsfeed_id = feed_row.gtfsfeed_id
 
                     i += 1
 
                     if i % self.batch_size == 0:
-                        session.commit()
+                        session.bulk_save_objects(objects)
 
-                session.commit()
+                        objects = []
+
+
+                session.bulk_save_objects(objects)
+                del objects
 
                 route_sel = select([Route.pid]).where(Trip.route_id == Route.route_id).where(
                     Trip.gtfsfeed == feed_row).where(Route.gtfsfeed == feed_row)
@@ -220,6 +219,8 @@ class GtfsDb(object):
 
                     if i % self.batch_size == 0:
                         session.bulk_save_objects(objects)
+
+                        logging.info("Finished {0}".format(i))
 
                         objects = []
 
