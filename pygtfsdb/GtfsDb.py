@@ -186,6 +186,9 @@ class GtfsDb(object):
             with zipped_gtfs.open('stop_times.txt') as time_fp:
                 reader = csv.DictReader(time_fp, delimiter=",")
                 i = 0
+
+                objects = []
+
                 for row in reader:
                     row = GtfsDb.empty_string_to_none(row)
 
@@ -200,20 +203,28 @@ class GtfsDb(object):
                         row['departure_time'] = None
 
                     t = StopTime(**row)
+                    t.gtfsfeed_id = feed_row.gtfsfeed_id
+
+                    objects.append(t)
                     # t.trip = session.query(Trip).filter(Trip.trip_id == t.trip_id).filter(
                     #     Trip.gtfsfeed == feed_row).first()
                     # t.stop = session.query(Stop).filter(Stop.stop_id == t.stop_id).filter(
                     #     Stop.gtfsfeed == feed_row).first()
 
-                    feed_row.stop_times.append(t)
-                    session.add(t)
 
+
+                    # feed_row.stop_times.append(t)
+                    # session.add(t)
+                    #
                     i += 1
 
                     if i % self.batch_size == 0:
-                        session.commit()
+                        session.bulk_save_objects(objects)
 
-                session.commit()
+                        objects = []
+
+                session.bulk_save_objects(objects)
+                del objects
 
                 trip_sel = select([Trip.pid]).where(StopTime.trip_id == Trip.trip_id).where(
                     Trip.gtfsfeed == feed_row).where(StopTime.gtfsfeed == feed_row)
