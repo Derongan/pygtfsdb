@@ -24,7 +24,7 @@ class GtfsDb(object):
 
         return dict
 
-    def __init__(self, dbstring, spatial=False):
+    def __init__(self, dbstring, spatial=False, batch_size=100):
         """
 
         :param dbstring: The string sqlalchemy will use to connect
@@ -33,6 +33,7 @@ class GtfsDb(object):
         self.dbstring = dbstring
 
         self.spatial = spatial
+        self.batch_size = batch_size
 
         self.engine = create_engine(self.dbstring)
 
@@ -61,7 +62,7 @@ class GtfsDb(object):
         try:
             feed_row = GTFSFeed(gtfs_name=gtfs_name)
             session.add(feed_row)
-
+            i = 0
             logging.info("Loading agencies")
             with zipped_gtfs.open('agency.txt') as agency_fp:
                 reader = csv.DictReader(agency_fp, delimiter=",")
@@ -71,12 +72,16 @@ class GtfsDb(object):
                     feed_row.agencies.append(a)
                     session.add(a)
 
+                    i += 1
+
+                    if i % self.batch_size == 0:
+                        session.commit()
                 session.commit()
 
             logging.info("Loading calendars")
             with zipped_gtfs.open('calendar.txt') as calendar_fp:
                 reader = csv.DictReader(calendar_fp, delimiter=",")
-
+                i = 0
                 for row in reader:
                     row = GtfsDb.empty_string_to_none(row)
 
@@ -102,12 +107,17 @@ class GtfsDb(object):
                     feed_row.calendars.append(c)
                     session.add(c)
 
+                    i += 1
+
+                    if i % self.batch_size == 0:
+                        session.commit()
+
                 session.commit()
 
             logging.info("Loading routes")
             with zipped_gtfs.open('routes.txt') as route_fp:
                 reader = csv.DictReader(route_fp, delimiter=",")
-
+                i = 0
                 for row in reader:
                     row = GtfsDb.empty_string_to_none(row)
 
@@ -115,12 +125,17 @@ class GtfsDb(object):
                     feed_row.routes.append(r)
                     session.add(r)
 
+                    i += 1
+
+                    if i % self.batch_size == 0:
+                        session.commit()
+
                 session.commit()
 
             logging.info("Loading stops")
             with zipped_gtfs.open('stops.txt') as stop_fp:
                 reader = csv.DictReader(stop_fp, delimiter=",")
-
+                i = 0
                 for row in reader:
                     row = GtfsDb.empty_string_to_none(row)
 
@@ -128,12 +143,17 @@ class GtfsDb(object):
                     feed_row.stops.append(s)
                     session.add(s)
 
+                    i += 1
+
+                    if i % self.batch_size == 0:
+                        session.commit()
+
                 session.commit()
 
             logging.info("Loading trips")
             with zipped_gtfs.open('trips.txt') as trip_fp:
                 reader = csv.DictReader(trip_fp, delimiter=",")
-
+                i = 0
                 for row in reader:
                     row = GtfsDb.empty_string_to_none(row)
 
@@ -145,6 +165,11 @@ class GtfsDb(object):
 
                     feed_row.trips.append(t)
                     session.add(t)
+
+                    i += 1
+
+                    if i % self.batch_size == 0:
+                        session.commit()
 
                 session.commit()
 
@@ -160,7 +185,7 @@ class GtfsDb(object):
             logging.info("Loading stop times")
             with zipped_gtfs.open('stop_times.txt') as time_fp:
                 reader = csv.DictReader(time_fp, delimiter=",")
-
+                i = 0
                 for row in reader:
                     row = GtfsDb.empty_string_to_none(row)
 
@@ -182,6 +207,11 @@ class GtfsDb(object):
 
                     feed_row.stop_times.append(t)
                     session.add(t)
+
+                    i += 1
+
+                    if i % self.batch_size == 0:
+                        session.commit()
 
                 session.commit()
 
