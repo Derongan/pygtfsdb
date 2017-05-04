@@ -230,9 +230,9 @@ class GtfsDb(object):
                 del objects
 
                 trip_sel = select([Trip.pid]).where(StopTime.trip_id == Trip.trip_id).where(
-                    Trip.gtfsfeed == feed_row).where(StopTime.gtfsfeed == feed_row)
+                    Trip.gtfsfeed_id == feed_row.gtfsfeed_id).where(StopTime.gtfsfeed_id == feed_row.gtfsfeed_id)
                 stop_sel = select([Stop.pid]).where(StopTime.stop_id == Stop.stop_id).where(
-                    StopTime.gtfsfeed == feed_row).where(Stop.gtfsfeed == feed_row)
+                    StopTime.gtfsfeed_id == feed_row.gtfsfeed_id).where(Stop.gtfsfeed_id == feed_row.gtfsfeed_id)
 
                 session.execute(StopTime.__table__.update().values(trip_pid=trip_sel, stop_pid=stop_sel))
 
