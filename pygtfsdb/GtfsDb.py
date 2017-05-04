@@ -170,7 +170,6 @@ class GtfsDb(object):
 
                         objects = []
 
-
                 session.bulk_save_objects(objects)
                 del objects
 
@@ -179,7 +178,8 @@ class GtfsDb(object):
                 calendar_sel = select([Calendar.pid]).where(Trip.service_id == Calendar.service_id).where(
                     Trip.gtfsfeed == feed_row).where(Calendar.gtfsfeed == feed_row)
 
-                session.execute(Trip.__table__.update().values(route_pid=route_sel, service_pid=calendar_sel))
+                session.execute(Trip.__table__.update().values(route_pid=route_sel, service_pid=calendar_sel).where(
+                    StopTime.gtfsfeed == feed_row))
 
                 session.commit()
 
@@ -229,12 +229,15 @@ class GtfsDb(object):
                 session.bulk_save_objects(objects)
                 del objects
 
-                trip_sel = select([Trip.pid]).where(StopTime.trip_id == Trip.trip_id).where(
-                    Trip.gtfsfeed_id == feed_row.gtfsfeed_id).where(StopTime.gtfsfeed_id == feed_row.gtfsfeed_id)
-                stop_sel = select([Stop.pid]).where(StopTime.stop_id == Stop.stop_id).where(
-                    StopTime.gtfsfeed_id == feed_row.gtfsfeed_id).where(Stop.gtfsfeed_id == feed_row.gtfsfeed_id)
+                session.commit()
 
-                session.execute(StopTime.__table__.update().values(trip_pid=trip_sel, stop_pid=stop_sel))
+                trip_sel = select([Trip.pid]).where(StopTime.trip_id == Trip.trip_id).where(
+                    Trip.gtfsfeed == feed_row).where(StopTime.gtfsfeed == feed_row)
+                stop_sel = select([Stop.pid]).where(StopTime.stop_id == Stop.stop_id).where(
+                    StopTime.gtfsfeed == feed_row).where(Stop.gtfsfeed == feed_row)
+
+                session.execute(StopTime.__table__.update().values(trip_pid=trip_sel, stop_pid=stop_sel).where(
+                    StopTime.gtfsfeed == feed_row))
 
                 session.commit()
         except:
