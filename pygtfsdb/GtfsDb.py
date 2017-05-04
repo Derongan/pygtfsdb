@@ -161,6 +161,8 @@ class GtfsDb(object):
                     t = Trip(**row)
                     t.gtfsfeed_id = feed_row.gtfsfeed_id
 
+                    objects.append(t);
+
                     i += 1
 
                     if i % self.batch_size == 0:
