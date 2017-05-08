@@ -137,6 +137,7 @@ class GtfsDb(object):
                 reader = csv.DictReader(stop_fp, delimiter=",")
                 i = 0
                 for row in reader:
+                    row['geom'] = "POINT({0} {1})".format(row['stop_lon'], row['stop_lat'])
                     row = GtfsDb.empty_string_to_none(row)
 
                     s = Stop(**row)
@@ -259,7 +260,7 @@ class GtfsDb(object):
 
                 session.execute(temp_stop.insert().from_select(['pid', 'stop_pid'], stop_sel))
 
-                session.execute(StopTime.__table__.update().values(stop_id=temp_stop.c.stop_pid).where(
+                session.execute(StopTime.__table__.update().values(stop_pid=temp_stop.c.stop_pid).where(
                     temp_stop.c.pid == StopTime.pid))
 
                 session.commit()
