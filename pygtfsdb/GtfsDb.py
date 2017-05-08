@@ -174,13 +174,50 @@ class GtfsDb(object):
                 session.bulk_save_objects(objects)
                 del objects
 
-                route_sel = select([Route.pid]).where(Trip.route_id == Route.route_id).where(
+                session.commit()
+
+                temp_route = Table("tt", Base.metadata, Column('pid', Integer, primary_key=True),
+                                  Column('route_pid', Integer),
+                                  prefixes=['TEMPORARY'])
+                temp_route.create(bind=self.engine)
+                route_sel = select([Trip.pid, Route.pid]).where(Trip.route_id == Route.route_id).where(
                     Trip.gtfsfeed == feed_row).where(Route.gtfsfeed == feed_row)
-                calendar_sel = select([Calendar.pid]).where(Trip.service_id == Calendar.service_id).where(
+
+                session.execute(temp_route.insert().from_select(['pid', 'route_pid'], route_sel))
+
+                session.execute(Trip.__table__.update().values(route_pid=temp_route.c.route_pid).where(
+                    temp_route.c.pid == Trip.pid))
+
+                session.commit()
+
+                temp_route.drop(bind=self.engine)
+                Base.metadata.remove(temp_route)
+                
+                
+                temp_calendar = Table("tt", Base.metadata, Column('pid', Integer, primary_key=True),
+                                  Column('service_pid', Integer),
+                                  prefixes=['TEMPORARY'])
+                temp_calendar.create(bind=self.engine)
+                calendar_sel = select([Trip.pid, Calendar.pid]).where(Trip.service_id == Calendar.service_id).where(
                     Trip.gtfsfeed == feed_row).where(Calendar.gtfsfeed == feed_row)
 
-                session.execute(Trip.__table__.update().values(route_pid=route_sel, service_pid=calendar_sel).where(
-                    StopTime.gtfsfeed == feed_row))
+                session.execute(temp_calendar.insert().from_select(['pid', 'service_pid'], calendar_sel))
+
+                session.execute(Trip.__table__.update().values(service_pid=temp_calendar.c.service_pid).where(
+                    temp_calendar.c.pid == Trip.pid))
+
+                session.commit()
+
+                temp_calendar.drop(bind=self.engine)
+                Base.metadata.remove(temp_calendar)
+
+                # route_sel = select([Route.pid]).where(Trip.route_id == Route.route_id).where(
+                #     Trip.gtfsfeed == feed_row).where(Route.gtfsfeed == feed_row)
+                # calendar_sel = select([Calendar.pid]).where(Trip.service_id == Calendar.service_id).where(
+                #     Trip.gtfsfeed == feed_row).where(Calendar.gtfsfeed == feed_row)
+                #
+                # session.execute(Trip.__table__.update().values(route_pid=route_sel, service_pid=calendar_sel).where(
+                #     StopTime.gtfsfeed == feed_row))
 
                 session.commit()
 
