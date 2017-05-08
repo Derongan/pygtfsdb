@@ -4,9 +4,9 @@ from datetime import datetime
 from zipfile import ZipFile
 
 import requests
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Table, Column, Integer, String
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql.expression import select
+from sqlalchemy.sql.expression import select, update, insert
 
 from models import *
 
@@ -227,19 +227,45 @@ class GtfsDb(object):
                         objects = []
 
                 session.bulk_save_objects(objects)
+                del objects[:]
                 del objects
 
                 session.commit()
 
-                trip_sel = select([Trip.pid]).where(StopTime.trip_id == Trip.trip_id).where(
+                temp_trip = Table("tt", Base.metadata, Column('pid', Integer, primary_key=True),
+                                  Column('trip_pid', Integer),
+                                  prefixes=['TEMPORARY'])
+                temp_trip.create(bind=self.engine)
+                trip_sel = select([StopTime.pid, Trip.pid]).where(StopTime.trip_id == Trip.trip_id).where(
                     Trip.gtfsfeed == feed_row).where(StopTime.gtfsfeed == feed_row)
-                stop_sel = select([Stop.pid]).where(StopTime.stop_id == Stop.stop_id).where(
-                    StopTime.gtfsfeed == feed_row).where(Stop.gtfsfeed == feed_row)
 
-                session.execute(StopTime.__table__.update().values(trip_pid=trip_sel, stop_pid=stop_sel).where(
-                    StopTime.gtfsfeed == feed_row))
+                session.execute(temp_trip.insert().from_select(['pid', 'trip_pid'], trip_sel))
+
+                session.execute(StopTime.__table__.update().values(trip_pid=temp_trip.c.trip_pid).where(
+                    temp_trip.c.pid == StopTime.pid))
 
                 session.commit()
+
+                temp_trip.drop(bind=self.engine)
+                Base.metadata.remove(temp_trip)
+
+                temp_stop = Table("tt", Base.metadata, Column('pid', Integer, primary_key=True),
+                                  Column('stop_pid', Integer),
+                                  prefixes=['TEMPORARY'])
+
+                temp_stop.create(bind=self.engine)
+                stop_sel = select([StopTime.pid, Stop.pid]).where(StopTime.stop_id == Stop.stop_id).where(
+                    Stop.gtfsfeed == feed_row).where(StopTime.gtfsfeed == feed_row)
+
+                session.execute(temp_stop.insert().from_select(['pid', 'stop_pid'], stop_sel))
+
+                session.execute(StopTime.__table__.update().values(stop_id=temp_stop.c.stop_pid).where(
+                    temp_stop.c.pid == StopTime.pid))
+
+                session.commit()
+                temp_trip.drop(bind=self.engine)
+                Base.metadata.remove(temp_stop)
+
         except:
             raise
         finally:
@@ -248,7 +274,7 @@ class GtfsDb(object):
 
 
 if __name__ == "__main__":
-    gt = GtfsDb('postgresql://postgres:@localhost:5432/alexabus', spatial=True)
+    gt = GtfsDb('postgresql://postgres:@localhost:5432/alexabus', spatial=True, batch_size=3000)
 
-    # zf = ZipFile(localfile)
-    gt.load("http://transitfeeds.com/p/bart/58/latest/download", "Bart")
+    zf = ZipFile("test_data/unitransgtfs.zip")
+    gt.load(zf, "Test")
