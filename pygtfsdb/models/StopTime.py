@@ -14,11 +14,11 @@ class StopTime(Base):
     # TODO Maybe somehow make foreign keys required
 
     trip_pid = Column(Integer, ForeignKey(Trip.pid))
-    trip_id = Column(String, nullable=False)
+    trip_id = Column(String, nullable=False, index=True)
     trip = relationship("Trip")
 
     stop_pid = Column(Integer, ForeignKey(Stop.pid))
-    stop_id = Column(String, nullable=False)
+    stop_id = Column(String, nullable=False, index=True)
     stop = relationship("Stop")
 
     # TODO These times should be not null and should be interpolated if the value is missing.
@@ -31,7 +31,7 @@ class StopTime(Base):
 
     pid = Column(Integer, primary_key=True, autoincrement=True)
 
-    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id))
+    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id), index=True)
 
     gtfsfeed = relationship('GTFSFeed', back_populates='stop_times')
 

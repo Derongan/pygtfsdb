@@ -13,8 +13,8 @@ class Route(Base):
         CheckConstraint('NOT(route_short_name IS NULL AND route_long_name IS NULL)'),
     )
 
-    route_id = Column(String, nullable=False)
-    agency_id = Column(String, default=None)
+    route_id = Column(String, nullable=False, index=True)
+    agency_id = Column(String, default=None, index=True)
 
     route_short_name = Column(String)
     route_long_name = Column(String)
@@ -29,7 +29,7 @@ class Route(Base):
 
     pid = Column(Integer, primary_key=True)
 
-    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id))
+    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id), index=True)
 
     gtfsfeed = relationship('GTFSFeed', back_populates='routes')
 

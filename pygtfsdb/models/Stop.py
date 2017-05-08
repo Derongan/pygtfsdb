@@ -9,7 +9,7 @@ from GTFSFeed import GTFSFeed
 class Stop(Base):
     __tablename__ = 'stop'
 
-    stop_id = Column(String, nullable=False)
+    stop_id = Column(String, nullable=False, index=True)
     stop_code = Column(String, default=None)
 
     stop_name = Column(String, nullable=False)
@@ -30,7 +30,7 @@ class Stop(Base):
 
     pid = Column(Integer, primary_key=True, autoincrement=True)
 
-    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id))
+    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id), index=True)
 
     gtfsfeed = relationship('GTFSFeed', back_populates='stops')
 

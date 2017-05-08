@@ -14,18 +14,18 @@ class Trip(Base):
     # TODO Maybe somehow make foreign keys required
 
     service_pid = Column(Integer, ForeignKey(Calendar.pid))  # Connects to calendar table actually
-    service_id = Column(String, nullable=False)  # Connects to calendar table actually
+    service_id = Column(String, nullable=False, index=True)  # Connects to calendar table actually
     calendar = relationship("Calendar")
 
     route_pid = Column(Integer, ForeignKey(Route.pid))
-    route_id = Column(String, nullable=False)
+    route_id = Column(String, nullable=False, index=True)
     route = relationship("Route")
 
-    trip_id = Column(String, nullable=False)
+    trip_id = Column(String, nullable=False, index=True)
 
     pid = Column(Integer, primary_key=True, autoincrement=True)
 
-    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id))
+    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id), index=True)
 
     gtfsfeed = relationship('GTFSFeed', back_populates='trips')
 

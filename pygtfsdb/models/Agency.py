@@ -8,7 +8,7 @@ from GTFSFeed import GTFSFeed
 class Agency(Base):
     __tablename__ = 'agency'
 
-    agency_id = Column(String, default=None)
+    agency_id = Column(String, default=None, index=True)
     agency_name = Column(String, nullable=False)
     agency_url = Column(String, nullable=False)
     agency_timezone = Column(String, nullable=False)
@@ -20,7 +20,7 @@ class Agency(Base):
 
     pid = Column(Integer, primary_key=True)
 
-    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id))
+    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id), index=True)
 
     gtfsfeed = relationship('GTFSFeed', back_populates='agencies')
 

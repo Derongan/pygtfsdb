@@ -10,7 +10,7 @@ from GTFSFeed import GTFSFeed
 class Calendar(Base):
     __tablename__ = 'calendar'
 
-    service_id = Column(String, nullable=False)
+    service_id = Column(String, nullable=False, index=True)
 
     monday = Column(Boolean, nullable=False, default=False)
     tuesday = Column(Boolean, nullable=False, default=False)
@@ -27,7 +27,7 @@ class Calendar(Base):
 
     pid = Column(Integer, autoincrement=True, primary_key=True)
 
-    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id))
+    gtfsfeed_id = Column(Integer, ForeignKey(GTFSFeed.gtfsfeed_id), index=True)
 
     gtfsfeed = relationship('GTFSFeed', back_populates='calendars')
 
